@@ -1,0 +1,31 @@
+name: app-server
+
+services:
+  cliproxyapi:
+    image: eceasy/cli-proxy-api:latest
+    container_name: cliproxyapi
+    network_mode: host
+    volumes:
+      - cliproxyapi_data:/CLIProxyAPI
+    restart: unless-stopped
+
+  ai-toolbox:
+    image: ghcr.io/soumojjalsen/ai-toolbox:latest
+    container_name: ai-toolbox
+    network_mode: host
+    env_file: /etc/ai-toolbox/.env
+    restart: unless-stopped
+    depends_on:
+      - cliproxyapi
+
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    network_mode: host
+    volumes:
+      - n8n_data:/home/node/.n8n
+    restart: unless-stopped
+
+volumes:
+  n8n_data:
+  cliproxyapi_data:
