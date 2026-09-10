@@ -20,5 +20,6 @@ jobs:
             mkdir -p ~/apps/server-config
             curl -so ~/apps/server-config/docker-compose.yml https://raw.githubusercontent.com/SoumojjalSen/server-config/main/docker-compose.yml
             cd ~/apps/server-config
+            docker-compose down --remove-orphans || true
             docker-compose pull
             docker-compose up -d
