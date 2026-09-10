@@ -1,0 +1,24 @@
+name: Deploy to VM
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Oracle VM
+        uses: appleboy/ssh-action@v1
+        with:
+          host: 140.238.229.137
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            mkdir -p ~/apps/server-config
+            curl -so ~/apps/server-config/docker-compose.yml https://raw.githubusercontent.com/SoumojjalSen/server-config/main/docker-compose.yml
+            cd ~/apps/server-config
+            docker-compose pull
+            docker-compose up -d
