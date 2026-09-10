@@ -13,8 +13,8 @@ jobs:
       - name: Deploy to Oracle VM
         uses: appleboy/ssh-action@v1
         with:
-          host: 140.238.229.137
-          username: ubuntu
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             mkdir -p ~/apps/server-config
