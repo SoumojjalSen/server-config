@@ -6,8 +6,8 @@ services:
     container_name: cliproxyapi
     network_mode: host
     volumes:
-      - cliproxyapi_data:/CLIProxyAPI
-      - cliproxyapi_auth:/root/.cli-proxy-api
+      - cliproxyapi_data:/CLIProxyAPI # config.yaml
+      - cliproxyapi_auth:/root/.cli-proxy-api # Claude OAuth tokens
     restart: unless-stopped
 
   ai-toolbox:
@@ -16,7 +16,7 @@ services:
     network_mode: host
     env_file: /etc/ai-toolbox/.env
     volumes:
-      - mcp_auth:/root/.mcp-auth
+      - mcp_auth:/root/.mcp-auth # Groww/Kite OAuth tokens
     restart: unless-stopped
     depends_on:
       - cliproxyapi
@@ -26,7 +26,7 @@ services:
     container_name: n8n
     network_mode: host
     volumes:
-      - n8n_data:/home/node/.n8n
+      - n8n_data:/home/node/.n8n # workflows, credentials, settings
     restart: unless-stopped
 
 volumes:
