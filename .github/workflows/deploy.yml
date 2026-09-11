@@ -22,8 +22,9 @@ jobs:
 
             # Download latest config files from GitHub repo to the VM
             # (VM doesn't have a git clone — we fetch individual files via raw URL)
-            curl -so ~/apps/server-config/docker-compose.yml https://raw.githubusercontent.com/SoumojjalSen/server-config/main/docker-compose.yml
-            curl -so ~/apps/server-config/Caddyfile https://raw.githubusercontent.com/SoumojjalSen/server-config/main/Caddyfile
+            # ?t=$(date +%s) busts GitHub's CDN cache so we always get the latest version
+            curl -so ~/apps/server-config/docker-compose.yml "https://raw.githubusercontent.com/SoumojjalSen/server-config/main/docker-compose.yml?t=$(date +%s)"
+            curl -so ~/apps/server-config/Caddyfile "https://raw.githubusercontent.com/SoumojjalSen/server-config/main/Caddyfile?t=$(date +%s)"
 
             # Stop and remove old containers, then start fresh with new config
             cd ~/apps/server-config
