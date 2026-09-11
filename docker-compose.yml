@@ -29,7 +29,17 @@ services:
       - n8n_data:/home/node/.n8n # workflows, credentials, settings
     restart: unless-stopped
 
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    network_mode: host
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile # routing config
+      - caddy_data:/data # TLS certs (for future HTTPS)
+    restart: unless-stopped
+
 volumes:
+  caddy_data:
   n8n_data:
   cliproxyapi_data:
   cliproxyapi_auth:
