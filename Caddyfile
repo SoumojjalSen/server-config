@@ -7,9 +7,9 @@
 	}
 
 	# Requests starting with /workflow/ go to n8n
+	# No strip_prefix — n8n knows its prefix via N8N_PATH env var
 	handle /workflow/* {
-		uri strip_prefix /workflow # Remove /workflow from path (/workflow/login → /login)
-		reverse_proxy localhost:5678 # Forward to n8n UI
+		reverse_proxy localhost:5678 # Forward to n8n UI (with /workflow prefix intact)
 	}
 
 	# Caddy's own health check — no forwarding
