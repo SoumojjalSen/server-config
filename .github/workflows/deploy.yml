@@ -11,17 +11,22 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Deploy to Oracle VM
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@v1 # SSH into VM and run commands
         with:
-          host: ${{ secrets.VM_HOST }}
-          username: ${{ secrets.VM_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          host: ${{ secrets.VM_HOST }} # VM IP address (stored as GitHub secret)
+          username: ${{ secrets.VM_USER }} # SSH user (stored as GitHub secret)
+          key: ${{ secrets.SSH_PRIVATE_KEY }} # SSH private key (stored as GitHub secret)
           script: |
+            # Create the app directory if it doesn't exist
             mkdir -p ~/apps/server-config
-            rm -rf ~/apps/server-config/Caddyfile
+
+            # Download latest config files from GitHub repo to the VM
+            # (VM doesn't have a git clone — we fetch individual files via raw URL)
             curl -so ~/apps/server-config/docker-compose.yml https://raw.githubusercontent.com/SoumojjalSen/server-config/main/docker-compose.yml
             curl -so ~/apps/server-config/Caddyfile https://raw.githubusercontent.com/SoumojjalSen/server-config/main/Caddyfile
+
+            # Stop and remove old containers, then start fresh with new config
             cd ~/apps/server-config
-            docker-compose down --remove-orphans || true
-            docker-compose pull
-            docker-compose up -d
+            docker-compose down --remove-orphans || true  # || true: ignore error on first run when no containers exist
+            docker-compose pull  # Pull latest Docker images
+            docker-compose up -d  # Start all services in background
