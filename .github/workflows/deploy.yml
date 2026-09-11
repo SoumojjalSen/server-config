@@ -8,26 +8,27 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4 # Downloads the repo (has docker-compose.yml, Caddyfile)
 
-      - name: Deploy to Oracle VM
-        uses: appleboy/ssh-action@v1 # SSH into VM and run commands
+      # Copy config files directly from repo to VM (no CDN, no caching issues)
+      - name: Copy files to VM
+        uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.VM_HOST }} # VM IP address (stored as GitHub secret)
-          username: ${{ secrets.VM_USER }} # SSH user (stored as GitHub secret)
-          key: ${{ secrets.SSH_PRIVATE_KEY }} # SSH private key (stored as GitHub secret)
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.yml,Caddyfile"
+          target: ~/apps/server-config
+
+      # Restart services with new config
+      - name: Deploy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Create the app directory if it doesn't exist
-            mkdir -p ~/apps/server-config
-
-            # Download latest config files from GitHub repo to the VM
-            # (VM doesn't have a git clone — we fetch individual files via raw URL)
-            # ?t=$(date +%s) busts GitHub's CDN cache so we always get the latest version
-            curl -so ~/apps/server-config/docker-compose.yml "https://raw.githubusercontent.com/SoumojjalSen/server-config/main/docker-compose.yml?t=$(date +%s)"
-            curl -so ~/apps/server-config/Caddyfile "https://raw.githubusercontent.com/SoumojjalSen/server-config/main/Caddyfile?t=$(date +%s)"
-
-            # Stop and remove old containers, then start fresh with new config
             cd ~/apps/server-config
-            docker-compose down --remove-orphans || true  # || true: ignore error on first run when no containers exist
-            docker-compose pull  # Pull latest Docker images
-            docker-compose up -d  # Start all services in background
+            docker-compose down --remove-orphans || true
+            docker-compose pull
+            docker-compose up -d
