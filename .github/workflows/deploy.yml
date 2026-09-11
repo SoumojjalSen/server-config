@@ -18,6 +18,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             mkdir -p ~/apps/server-config
+            rm -rf ~/apps/server-config/Caddyfile
             curl -so ~/apps/server-config/docker-compose.yml https://raw.githubusercontent.com/SoumojjalSen/server-config/main/docker-compose.yml
             curl -so ~/apps/server-config/Caddyfile https://raw.githubusercontent.com/SoumojjalSen/server-config/main/Caddyfile
             cd ~/apps/server-config
