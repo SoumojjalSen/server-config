@@ -29,8 +29,18 @@ services:
       - n8n_data:/home/node/.n8n # workflows, credentials, settings
     restart: unless-stopped
 
+  caddy: # Reverse proxy — routes incoming traffic to the right service
+    image: caddy:2-alpine # Caddy v2 on Alpine Linux (lightweight)
+    container_name: caddy
+    network_mode: host # Shares VM's network — so Caddyfile's reverse_proxy localhost:3000/:5678 works
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile # Host file mount — your routing config from the repo
+      - caddy_data:/data # Named volume — Caddy stores TLS certificates here (for future HTTPS)
+    restart: unless-stopped
+
 volumes:
   n8n_data:
   cliproxyapi_data:
   cliproxyapi_auth:
   mcp_auth:
+  caddy_data:

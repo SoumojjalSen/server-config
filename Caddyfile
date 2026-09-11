@@ -1,0 +1,24 @@
+# Listen on port 80 (HTTP). No domain = no auto-HTTPS.
+:80 {
+	# Requests starting with /ai-toolbox/ go to ai-toolbox
+	handle /ai-toolbox/* {
+		uri strip_prefix /ai-toolbox # Remove /ai-toolbox from path (/ai-toolbox/health → /health)
+		reverse_proxy localhost:3000 # Forward to ai-toolbox
+	}
+
+	# Requests starting with /workflow/ go to n8n
+	handle /workflow/* {
+		uri strip_prefix /workflow # Remove /workflow from path (/workflow/login → /login)
+		reverse_proxy localhost:5678 # Forward to n8n UI
+	}
+
+	# Caddy's own health check — no forwarding
+	handle /health {
+		respond "ok" 200
+	}
+
+	# Catch-all — anything that doesn't match above
+	handle {
+		respond "app-server" 200
+	}
+}
