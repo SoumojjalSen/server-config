@@ -26,7 +26,7 @@ services:
     container_name: n8n
     network_mode: host
     environment:
-      - N8N_PATH=/workflow # Serve n8n at /workflow path (localhost:5678/workflow/)
+      - N8N_PATH=/workflow/ # Serve n8n at /workflow path (localhost:5678/workflow/)
     volumes:
       - n8n_data:/home/node/.n8n # workflows, credentials, settings
     restart: unless-stopped
