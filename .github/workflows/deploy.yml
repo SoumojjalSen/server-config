@@ -19,6 +19,7 @@ jobs:
           script: |
             mkdir -p ~/apps/server-config
             curl -so ~/apps/server-config/docker-compose.yml https://raw.githubusercontent.com/SoumojjalSen/server-config/main/docker-compose.yml
+            curl -so ~/apps/server-config/Caddyfile https://raw.githubusercontent.com/SoumojjalSen/server-config/main/Caddyfile
             cd ~/apps/server-config
             docker-compose down --remove-orphans || true
             docker-compose pull
