@@ -27,6 +27,7 @@ services:
     network_mode: host
     environment:
       - N8N_SECURE_COOKIE=false # Allow cookies over HTTP (no HTTPS yet)
+      - GENERIC_TIMEZONE=Asia/Kolkata # Cron triggers use IST
     volumes:
       - n8n_data:/home/node/.n8n # workflows, credentials, settings
     restart: unless-stopped
