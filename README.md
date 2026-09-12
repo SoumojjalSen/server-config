@@ -76,6 +76,20 @@ GitHub Actions deploy:
 VM now runs latest config + latest images.
 ```
 
+### Why SCP, not curl?
+
+Originally the deploy script used `curl` to download files from `raw.githubusercontent.com`. But GitHub's CDN caches raw files for ~5 minutes. The deploy runs immediately after push — so it would download the **old** cached file, not the one you just pushed.
+
+```
+Before (broken):
+  push → GitHub CDN (cached ~5 min) → curl on VM → stale file → wrong config deployed
+
+After (fixed):
+  push → actions/checkout (downloads from git, not CDN) → SCP to VM → always latest
+```
+
+SCP copies files directly from the GitHub runner (which has the exact commit you pushed) to the VM. No CDN, no caching, always fresh.
+
 ### How the two flows connect
 
 ```
