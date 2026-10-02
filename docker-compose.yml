@@ -1,22 +1,33 @@
 name: app-server
 
+# Docker keeps container logs forever by default — cap each service at 3 × 10MB
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   ai-toolbox:
     image: ghcr.io/soumojjalsen/ai-toolbox:latest
     container_name: ai-toolbox
+    logging: *logging
     network_mode: host
     env_file: /etc/ai-toolbox/.env
     volumes:
       - mcp_auth:/root/.mcp-auth # Groww/Kite OAuth tokens
+      - claude_sessions:/root/.claude/projects # one file per /ai run (research path), auto-deleted after 7 days
     restart: unless-stopped
 
   n8n:
     image: n8nio/n8n
     container_name: n8n
+    logging: *logging
     network_mode: host
     environment:
       - N8N_SECURE_COOKIE=false # Allow cookies over HTTP (no HTTPS yet)
       - GENERIC_TIMEZONE=Asia/Kolkata # Cron triggers use IST
+      - EXECUTIONS_DATA_MAX_AGE=168 # keep run history 7 days (hours) — same as ai-toolbox's Claude session files
     volumes:
       - n8n_data:/home/node/.n8n # workflows, credentials, settings
     restart: unless-stopped
@@ -24,6 +35,7 @@ services:
   caddy: # Reverse proxy — routes incoming traffic to the right service
     image: caddy:2-alpine # Caddy v2 on Alpine Linux (lightweight)
     container_name: caddy
+    logging: *logging
     network_mode: host # Shares VM's network — so Caddyfile's reverse_proxy localhost:3000/:5678 works
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile # Host file mount — your routing config from the repo
@@ -33,4 +45,5 @@ services:
 volumes:
   n8n_data:
   mcp_auth:
+  claude_sessions:
   caddy_data:

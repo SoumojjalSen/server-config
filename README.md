@@ -22,6 +22,7 @@ Deployment config for Oracle Cloud ARM VM (140.238.229.137).
 │                                                             │
 │  Volumes:                                                   │
 │  ├── mcp_auth          → /root/.mcp-auth (Groww auth)       │
+│  ├── claude_sessions   → /root/.claude/projects (7 days)    │
 │  ├── n8n_data          → /home/node/.n8n (workflows)        │
 │  └── caddy_data        → /data (TLS certs, future HTTPS)    │
 │                                                             │
@@ -147,6 +148,7 @@ These are set once. GitHub Actions reads them at runtime — they never appear i
 
 ```bash
 docker logs ai-toolbox --tail 20    # MCP + AI gateway
+docker exec -it ai-toolbox claude --resume <sessionId>   # full research path of one /ai run (last 7 days)
 docker logs n8n --tail 20           # Workflow engine
 docker logs caddy --tail 20         # Reverse proxy
 docker-compose logs --tail 10       # All at once
