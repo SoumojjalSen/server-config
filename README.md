@@ -14,17 +14,13 @@ Deployment config for Oracle Cloud ARM VM (140.238.229.137).
 │  └── :8080              → n8n (:5678)                       │
 │                                                             │
 │  ai-toolbox (:3000) ← MCP + AI gateway                     │
-│  ├── /ai          → sends prompt to CLIProxyAPI             │
+│  ├── /ai          → Claude Code (claude -p) + web search    │
 │  ├── /mcp/:server → connects to Groww/Kite MCP servers      │
 │  └── /skills      → lists available AI skills               │
-│                                                             │
-│  CLIProxyAPI (:8317) ← proxies Claude Team subscription     │
 │                                                             │
 │  n8n (:5678) ← workflow scheduler + UI                      │
 │                                                             │
 │  Volumes:                                                   │
-│  ├── cliproxyapi_data  → /CLIProxyAPI (config.yaml)         │
-│  ├── cliproxyapi_auth  → /root/.cli-proxy-api (Claude auth) │
 │  ├── mcp_auth          → /root/.mcp-auth (Groww auth)       │
 │  ├── n8n_data          → /home/node/.n8n (workflows)        │
 │  └── caddy_data        → /data (TLS certs, future HTTPS)    │
@@ -34,7 +30,7 @@ Deployment config for Oracle Cloud ARM VM (140.238.229.137).
 │  └── ~/apps/server-config/Caddyfile                         │
 │                                                             │
 │  Env files (created manually, has secrets):                  │
-│  └── /etc/ai-toolbox/.env                                   │
+│  └── /etc/ai-toolbox/.env (CLAUDE_CODE_OAUTH_TOKEN, ...)    │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -45,7 +41,7 @@ There are two separate repos with two separate purposes:
 ### Flow A: ai-toolbox repo → builds Docker image
 
 ```
-You push code (index.js, skills, Dockerfile)
+You push code (src/, skills, Dockerfile)
     │
     ▼
 GitHub Actions CI:
@@ -128,7 +124,6 @@ These are set once. GitHub Actions reads them at runtime — they never appear i
 | 8080 | Caddy → n8n | Public | Workflow UI |
 | 3000 | ai-toolbox | Internal | MCP + AI gateway (`/ai`, `/mcp/*`, `/skills`, `/health`) |
 | 5678 | n8n | Internal | Workflow engine (Caddy proxies via :8080) |
-| 8317 | CLIProxyAPI | Internal | Claude Team proxy (OpenAI-compatible API) |
 
 ## URLs
 
@@ -140,17 +135,17 @@ These are set once. GitHub Actions reads them at runtime — they never appear i
 
 | What | Where | How it gets there |
 |------|-------|-------------------|
-| App code (index.js, skills) | Inside Docker image | Built by ai-toolbox CI, pulled via `docker-compose pull` |
+| App code (src/, skills) | Inside Docker image | Built by ai-toolbox CI, pulled via `docker-compose pull` |
 | docker-compose.yml | `~/apps/server-config/` on VM | SCP'd by deploy workflow |
 | Caddyfile | `~/apps/server-config/` on VM | SCP'd by deploy workflow |
 | Secrets (.env) | `/etc/ai-toolbox/.env` on VM | Created manually once, never in git |
-| Auth tokens | Docker volumes on VM | Created by one-time login, persisted in volumes |
+| Claude token | `/etc/ai-toolbox/.env` | `claude setup-token` on your laptop, pasted in once |
+| Groww/Kite tokens | `mcp_auth` volume on VM | One-time MCP login, persisted in volume |
 | n8n workflows | Docker volume on VM | Created in n8n UI, persisted in n8n_data volume |
 
 ## Logs
 
 ```bash
-docker logs cliproxyapi --tail 20   # Claude proxy
 docker logs ai-toolbox --tail 20    # MCP + AI gateway
 docker logs n8n --tail 20           # Workflow engine
 docker logs caddy --tail 20         # Reverse proxy

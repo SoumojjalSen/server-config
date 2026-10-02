@@ -1,11 +1,5 @@
-# Port 80: ai-toolbox API + health
+# Port 80: health only. ai-toolbox is NOT public — it has no auth; n8n reaches it on localhost:3000
 :80 {
-	# Requests starting with /ai-toolbox/ go to ai-toolbox
-	handle /ai-toolbox/* {
-		uri strip_prefix /ai-toolbox # Remove /ai-toolbox from path (/ai-toolbox/health → /health)
-		reverse_proxy localhost:3000 # Forward to ai-toolbox
-	}
-
 	# Caddy's own health check — no forwarding
 	handle /health {
 		respond "ok" 200

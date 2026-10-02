@@ -1,15 +1,6 @@
 name: app-server
 
 services:
-  cliproxyapi:
-    image: eceasy/cli-proxy-api:latest
-    container_name: cliproxyapi
-    network_mode: host
-    volumes:
-      - cliproxyapi_data:/CLIProxyAPI # config.yaml
-      - cliproxyapi_auth:/root/.cli-proxy-api # Claude OAuth tokens
-    restart: unless-stopped
-
   ai-toolbox:
     image: ghcr.io/soumojjalsen/ai-toolbox:latest
     container_name: ai-toolbox
@@ -18,8 +9,6 @@ services:
     volumes:
       - mcp_auth:/root/.mcp-auth # Groww/Kite OAuth tokens
     restart: unless-stopped
-    depends_on:
-      - cliproxyapi
 
   n8n:
     image: n8nio/n8n
@@ -43,7 +32,5 @@ services:
 
 volumes:
   n8n_data:
-  cliproxyapi_data:
-  cliproxyapi_auth:
   mcp_auth:
   caddy_data:

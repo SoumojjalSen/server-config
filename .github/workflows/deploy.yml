@@ -29,6 +29,5 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd ~/apps/server-config
-            docker-compose down --remove-orphans || true
             docker-compose pull
-            docker-compose up -d
+            docker-compose up -d --remove-orphans # recreates only changed containers, removes ones dropped from compose
