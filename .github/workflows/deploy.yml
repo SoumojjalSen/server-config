@@ -31,3 +31,4 @@ jobs:
             cd ~/apps/server-config
             docker-compose pull
             docker-compose up -d --remove-orphans # recreates only changed containers, removes ones dropped from compose
+            docker-compose restart caddy # Caddyfile is a bind mount — edits don't recreate the container, so restart to load them

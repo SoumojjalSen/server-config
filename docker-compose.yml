@@ -12,7 +12,7 @@ services:
     image: ghcr.io/soumojjalsen/ai-toolbox:latest
     container_name: ai-toolbox
     logging: *logging
-    network_mode: host
+    network_mode: host # n8n reaches it on 127.0.0.1:8080; it binds loopback only, so it's never public
     env_file: /etc/ai-toolbox/.env
     volumes:
       - mcp_auth:/root/.mcp-auth # Groww/Kite OAuth tokens
@@ -23,7 +23,7 @@ services:
     image: n8nio/n8n
     container_name: n8n
     logging: *logging
-    network_mode: host
+    network_mode: host # UI public on :5678
     environment:
       - N8N_SECURE_COOKIE=false # Allow cookies over HTTP (no HTTPS yet)
       - GENERIC_TIMEZONE=Asia/Kolkata # Cron triggers use IST
@@ -36,7 +36,7 @@ services:
     image: caddy:2-alpine # Caddy v2 on Alpine Linux (lightweight)
     container_name: caddy
     logging: *logging
-    network_mode: host # Shares VM's network — so Caddyfile's reverse_proxy localhost:3000/:5678 works
+    network_mode: host # Shares VM's network — binds :80 directly
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile # Host file mount — your routing config from the repo
       - caddy_data:/data # Named volume — Caddy stores TLS certificates here (for future HTTPS)

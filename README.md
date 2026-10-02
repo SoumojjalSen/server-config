@@ -8,17 +8,16 @@ Deployment config for Oracle Cloud ARM VM (140.238.229.137).
 ┌─────────────────────────────────────────────────────────────┐
 │ Oracle VM (140.238.229.137)                                 │
 │                                                             │
-│  Caddy (:80, :8080) ← only public-facing ports             │
-│  ├── :80  /ai-toolbox/* → ai-toolbox (:3000)               │
-│  ├── :80  /health       → "ok"                              │
-│  └── :8080              → n8n (:5678)                       │
+│  Public ports: 80 (Caddy health), 5678 (n8n UI)             │
 │                                                             │
-│  ai-toolbox (:3000) ← MCP + AI gateway                     │
+│  Caddy (:80) → /health "ok"                                 │
+│                                                             │
+│  ai-toolbox (127.0.0.1:8080, internal only — no auth)       │
 │  ├── /ai          → Claude Code (claude -p) + web search    │
 │  ├── /mcp/:server → connects to Groww/Kite MCP servers      │
 │  └── /skills      → lists available AI skills               │
 │                                                             │
-│  n8n (:5678) ← workflow scheduler + UI                      │
+│  n8n (:5678) ← workflow scheduler + UI, calls ai-toolbox    │
 │                                                             │
 │  Volumes:                                                   │
 │  ├── mcp_auth          → /root/.mcp-auth (Groww auth)       │
@@ -30,7 +29,7 @@ Deployment config for Oracle Cloud ARM VM (140.238.229.137).
 │  ├── ~/apps/server-config/docker-compose.yml                │
 │  └── ~/apps/server-config/Caddyfile                         │
 │                                                             │
-│  Env files (created manually, has secrets):                  │
+│  Env files (created manually, has secrets):                 │
 │  └── /etc/ai-toolbox/.env (CLAUDE_CODE_OAUTH_TOKEN, ...)    │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -49,9 +48,10 @@ GitHub Actions CI:
     1. Reads the Dockerfile
     2. Builds a Docker image (your code + node_modules baked in)
     3. Pushes image to ghcr.io/soumojjalsen/ai-toolbox:latest
+    4. SSHs into the VM: docker-compose pull ai-toolbox + up -d ai-toolbox
     │
     ▼
-Image stored on GitHub Container Registry. Nothing happens on VM yet.
+VM runs the new image within a few minutes of the push.
 ```
 
 ### Flow B: server-config repo → deploys to VM
@@ -65,9 +65,9 @@ GitHub Actions deploy:
     2. scp-action → copies docker-compose.yml + Caddyfile to VM
        (uses SSH key from GitHub Secrets)
     3. ssh-action → SSHs into VM and runs:
-       - docker-compose down (stop old containers)
        - docker-compose pull (pulls latest images from ghcr.io)
-       - docker-compose up -d (starts containers)
+       - docker-compose up -d --remove-orphans (recreates only changed containers)
+       - docker-compose restart caddy (Caddyfile is a bind mount — needs a restart to load edits)
     │
     ▼
 VM now runs latest config + latest images.
@@ -121,16 +121,15 @@ These are set once. GitHub Actions reads them at runtime — they never appear i
 
 | Port | Service | Access | What it does |
 |------|---------|--------|-------------|
-| 80 | Caddy | Public | Reverse proxy — routes `/ai-toolbox/*` to ai-toolbox |
-| 8080 | Caddy → n8n | Public | Workflow UI |
-| 3000 | ai-toolbox | Internal | MCP + AI gateway (`/ai`, `/mcp/*`, `/skills`, `/health`) |
-| 5678 | n8n | Internal | Workflow engine (Caddy proxies via :8080) |
+| 80 | Caddy | Public | Health check (`/health`) |
+| 5678 | n8n | Public | Workflow UI + engine |
+| 8080 | ai-toolbox | Loopback only (127.0.0.1) | MCP + AI gateway (`/ai`, `/mcp/*`, `/skills`, `/health`) — n8n calls `http://127.0.0.1:8080` |
 
 ## URLs
 
-- `http://140.238.229.137/ai-toolbox/health` — ai-toolbox health check
 - `http://140.238.229.137/health` — Caddy health check
-- `http://140.238.229.137:8080` — n8n UI
+- `http://140.238.229.137:5678` — n8n UI
+- ai-toolbox health, on the VM: `curl 127.0.0.1:8080/health`
 
 ## What lives where
 
