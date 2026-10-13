@@ -17,6 +17,7 @@ services:
     volumes:
       - mcp_auth:/root/.mcp-auth # Groww/Kite OAuth tokens
       - claude_sessions:/root/.claude/projects # one file per /ai run (research path), auto-deleted after 7 days
+      - /var/lib/ai-toolbox:/data # ai-toolbox persistent data, one folder per feature (market/: holdings, picks)
     restart: unless-stopped
 
   n8n:
